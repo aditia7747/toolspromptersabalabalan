@@ -1,5 +1,5 @@
 (function () {
-  // 1. Blokir shortcut inspect element (F12, Ctrl+U, Ctrl+Shift+I/J/C)
+  // 1. Blokir shortcut Inspect Element (F12, Ctrl+U, Ctrl+Shift+I/J/C)
   document.addEventListener('keydown', function (e) {
     if (
       e.key === 'F12' ||
@@ -10,37 +10,13 @@
     }
   });
 
-  // 2. Inject External Resources
+  // 2. Set Meta Theme Color
   const metaTheme = document.createElement('meta');
   metaTheme.name = 'theme-color';
   metaTheme.content = '#050505';
   document.head.appendChild(metaTheme);
 
-  const fontPreconnect1 = document.createElement('link');
-  fontPreconnect1.rel = 'preconnect';
-  fontPreconnect1.href = 'https://fonts.googleapis.com';
-  document.head.appendChild(fontPreconnect1);
-
-  const fontPreconnect2 = document.createElement('link');
-  fontPreconnect2.rel = 'preconnect';
-  fontPreconnect2.href = 'https://fonts.gstatic.com';
-  fontPreconnect2.crossOrigin = 'anonymous';
-  document.head.appendChild(fontPreconnect2);
-
-  const fontLink = document.createElement('link');
-  fontLink.rel = 'stylesheet';
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;500;600;700&display=swap';
-  document.head.appendChild(fontLink);
-
-  const scriptTailwind = document.createElement('script');
-  scriptTailwind.src = 'https://cdn.tailwindcss.com';
-  document.head.appendChild(scriptTailwind);
-
-  const scriptIcons = document.createElement('script');
-  scriptIcons.src = 'https://unpkg.com/@phosphor-icons/web';
-  document.head.appendChild(scriptIcons);
-
-  // 3. Inject CSS Styles
+  // 3. Inject CSS Kustom (Glassmorphism & Background Animation)
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
     :root { --bg-deep: #050505; }
@@ -152,7 +128,7 @@
     </footer>
   `;
 
-  // 5. Logika Upload & Fetch
+  // 5. State & Logika Upload / Fetch
   let state = { img: null, mime: null };
 
   function showToast(message, type = 'info') {
@@ -290,8 +266,8 @@
       }
     } catch (err) {
       console.error(err);
-      showToast('API ERROR: Periksa pengaturan atau coba lagi.', 'error');
-      output.value = "Terjadi kesalahan pada terminal AI. Silakan coba lagi.";
+      showToast('API ERROR: ' + (err.message || 'Periksa koneksi'), 'error');
+      output.value = "Terjadi kesalahan pada terminal AI: " + err.message;
     } finally {
       btnText.textContent = "EKSTRAK PROMPT";
       loader.classList.add('hidden-el');
