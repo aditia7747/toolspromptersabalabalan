@@ -5,17 +5,17 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'API Key belum disetting di Vercel Environment Variables.' });
+    return res.status(500).json({ error: 'API Key belum disetting di Vercel.' });
   }
 
   const { base64Data, mimeType } = req.body;
   if (!base64Data || !mimeType) {
-    return res.status(400).json({ error: 'Data gambar tidak valid.' });
+    return res.status(400).json({ error: 'Gambar tidak terdeteksi.' });
   }
 
   const systemInstruction = `
-  Anda adalah "VannMrtnz", Penganalisis visual ekstrem dan pencetak Prompt tingkat dewa.
-  Tugas mutlak: Ekstrak visual gambar menjadi 1 blok teks PROMPT MURNI menggunakan bahasa Mandarin dan tag inggris tertentu.
+  Anda adalah "VannMrtnz", Penganalisis gaya fotografi dan pencetak Prompt Midjourney/Stable Diffusion.
+  Tugas mutlak: Ekstrak visual gambar (komposisi, pencahayaan, pakaian, dan suasana latar) menjadi 1 blok teks PROMPT MURNI menggunakan bahasa Mandarin dan tag inggris tertentu.
   DILARANG ADA KATA PENGANTAR. DILARANG ADA KESIMPULAN. HANYA OUTPUT PROMPT.
 
   KUNCIAN PERMANEN (WAJIB ADA 100% PERSIS DI POSISI MASING-MASING TANPA DIUBAH):
@@ -29,9 +29,9 @@ export default async function handler(req, res) {
 
   vertical composition, 9:16 aspect ratio, full body framing, no horizontal crop
 
-  构图与主体：[Deskripsikan sangat detail: jenis tempat, tipe framing (candid/selfie), posisi framing. Deskripsikan orang/objek, gaya rambut (jangan sebut warna/ras/etnis), aktivitas, pose]. 强制为自然真实的白皙皮肤（Fair skin）与绝对完美无瑕干净的面部（Flawless clean face）。
+  构图与主体：[Deskripsikan komposisi visual, sudut framing, pose subjek, gaya rambut secara artistik]. 强制为自然真实的白皙皮肤（Fair skin）与绝对完美无瑕干净的面部（Flawless clean face）。
 
-  服装与环境：[Deskripsikan ekstrim detail: warna, bahan, motif pakaian, objek di sekitar, tekstur dinding/lantai, benda-benda pendukung].
+  服装与环境：[Deskripsikan detail warna, motif pakaian, benda pendukung, dan tekstur background].
 
   光线与色彩：基于[Pilih: 室内强闪光灯/户外强光]规则，正前方手机开启极其强烈的冷白硬光直射。在[sebutkan objek pantul]上产生 1% 的轻微眩光（Mild Glare）和局部高光轻微过曝。强硬直射光在[sebutkan latar]投射出极其浓重、边缘极其锐利生硬的黑色死黑硬阴影（Hard shadows）。绝对无景深虚化（No bokeh），极深景深，[sebutkan objek]极度锐利。在死黑阴影中保留大量真实的手机高ISO CMOS彩色数字噪点。受[kondisi cahaya]影响白平衡轻微[sebut tone], 整体带有极强的粗糙原片纪实抓拍质感与严重的高反差光影失真。
 
@@ -42,29 +42,45 @@ export default async function handler(req, res) {
     contents: [{
       role: "user",
       parts: [
-        { text: "Lakukan analisis 99.9% dan cetak HANYA Prompt sesuai Kuncian Permanen (Fair skin, Flawless face, 1% Mild Glare, 4K, 8K) dan format." },
+        { text: "Analisis gaya fotografi, komposisi, dan visual dari gambar ini lalu buat prompt-nya." },
         { inlineData: { mimeType, data: base64Data } }
       ]
     }],
-    systemInstruction: { parts: [{ text: systemInstruction }] }
+    systemInstruction: { parts: [{ text: systemInstruction }] },
+    safetySettings: [
+      { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+    ]
   };
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     const result = await response.json();
-    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-      let promptRaw = result.candidates[0].content.parts[0].text;
+
+    if (result.error) {
+      return res.status(400).json({ error: result.error.message || 'Error Google API' });
+    }
+
+    const candidate = result.candidates?.[0];
+    if (candidate?.finishReason === 'SAFETY') {
+      return res.status(400).json({ error: 'Foto ditolak sistem keamanan Google. Coba ganti sudut foto atau gambar lain.' });
+    }
+
+    if (candidate?.content?.parts?.[0]?.text) {
+      let promptRaw = candidate.content.parts[0].text;
       promptRaw = promptRaw.replace(/^```[\s\S]*?\n/g, '').replace(/```$/g, '').trim();
       return res.status(200).json({ prompt: promptRaw });
     } else {
-      return res.status(500).json({ error: 'Gagal memproses visual dari Gemini API.' });
+      return res.status(500).json({ error: 'Respon Google kosong. Coba gambar lain.' });
     }
   } catch (err) {
-    return res.status(500).json({ error: 'Server gagal menghubungi Gemini API.' });
+    return res.status(500).json({ error: 'Gagal hubungi server: ' + err.message });
   }
 }
