@@ -1,5 +1,4 @@
 (function () {
-  // 1. Blokir shortcut Inspect Element (F12, Ctrl+U, Ctrl+Shift+I/J/C)
   document.addEventListener('keydown', function (e) {
     if (
       e.key === 'F12' ||
@@ -10,36 +9,11 @@
     }
   });
 
-  // 2. Set Meta Theme Color
   const metaTheme = document.createElement('meta');
   metaTheme.name = 'theme-color';
   metaTheme.content = '#050505';
   document.head.appendChild(metaTheme);
 
-  // 3. Inject CSS Kustom (Glassmorphism & Background Animation)
-  const styleEl = document.createElement('style');
-  styleEl.innerHTML = `
-    :root { --bg-deep: #050505; }
-    html { background-color: var(--bg-deep); overscroll-behavior-y: none; }
-    body { font-family: 'Inter', sans-serif; background-color: var(--bg-deep); color: #fff; overflow-x: hidden; min-height: 100vh; display: flex; flex-direction: column; }
-    .font-cyber { font-family: 'Orbitron', sans-serif; }
-    @keyframes cyber-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-    .bg-monochrome-animated { background: linear-gradient(135deg, #000000, #1a1a1a, #0a0a0a, #333333, #000000); background-size: 400% 400%; animation: cyber-flow 18s ease infinite; background-attachment: fixed; }
-    .bg-grid { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 30px 30px; pointer-events: none; z-index: 0; }
-    .glass-panel { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.03); }
-    .glass-input { background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; transition: all 0.3s ease; }
-    .glass-input:focus, .glass-input:hover { border-color: rgba(255, 255, 255, 0.6); box-shadow: 0 0 15px rgba(255, 255, 255, 0.15); outline: none; }
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #050505; }
-    ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-    .loader { border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #000; border-radius: 50%; width: 22px; height: 22px; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .hidden-el { display: none !important; }
-    .img-preview { object-fit: contain; width: 100%; height: 100%; border-radius: 0.5rem; }
-  `;
-  document.head.appendChild(styleEl);
-
-  // 4. Render UI
   document.body.className = 'bg-monochrome-animated relative';
   const root = document.getElementById('root');
   root.innerHTML = `
@@ -128,7 +102,6 @@
     </footer>
   `;
 
-  // 5. State & Logika Upload / Fetch
   let state = { img: null, mime: null };
 
   function showToast(message, type = 'info') {
